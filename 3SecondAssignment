@@ -1,0 +1,237 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>3 Second Click</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-T3c6CoIi6uLrA9TneNEoa7RxnatzjcDSCmG1MXxSR1GAsXEV/Dwwykc2MPK8M2HN" crossorigin="anonymous">
+    <style>
+        body {
+            background-color: hotpink;
+        }
+        div{
+            text-align: center
+        }
+    </style>
+</head>
+<body>
+<div class="container" style="text-align: center;">
+    <div class="container" style="text-align: center;">
+        <h1 style="display: inline-flex; align-items: center;">3 Seconds Stop</h1>
+        <i class="fa-solid fa-stopwatch" style="font-size: 40px;"></i>
+    </div>
+
+    <div style="text-align: center;">
+        <button type="button" class="btn btn-light btn-lg" id="startButton">Start Timer</button>
+    </div>
+    <br><br>
+
+    <div class="btn-group" role="group" aria-label="Default button group" style="text-align: center;">
+        <button type="button" class="btn btn-light" id="attempt">View Attempt Results</button>
+        <button type="button" class="btn btn-light" id="summary">View Summary Results</button>
+        <button type="button" class="btn btn-light" id="clear">Clear All Attempts</button>
+    </div>
+
+    <div id="attemptSummary"></div>
+    <div id="overallSummary"></div>
+    <div id="totalAttempts"></div>
+    <div id="minSummary"></div>
+    <div id="maxSummary"></div>
+    <div id="avgSummary"></div>
+    <div id="clears"></div>
+
+    <br><br>
+    <div class="container" style="display: flex; justify-content: center;">
+        <canvas id="myChart" style="width:100%;max-width:700px;"></canvas>
+    </div>
+</div>
+</body>
+
+<script src="https://code.jquery.com/jquery-3.7.1.min.js" integrity="sha256-/JqT3SQfawRcv/BIHPThkBvs0OEvtFFmqPF/lYI/Cxo=" crossorigin="anonymous"></script>
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js" integrity="sha384-ka7Sk0Gln4gmtz2MlQnikT1wXgYsOg+OMhuP+IlRH9sENBO0LRn5q+8nbTov4+1p" crossorigin="anonymous"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/2.9.4/Chart.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/js/all.min.js" integrity="sha512-GWzVrcGlo0TxTRvz9ttioyYJ+Wwk9Ck0G81D+eO63BaqHaJ3YZX9wuqjwgfcV/MrB2PhaVX9DkYVhbFpStnqpQ==" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+<script type="text/javascript">
+    $(document).ready(function() {
+        const targetTime = 3;
+        let startTime = 0;
+        let endTime = 0;
+        let elapsedTime = 0;
+        let realTime = null;
+        let attempts = [];
+        let attemptNumber = 0;
+
+        $("#startButton").on("click", function (event) {
+            $("#attemptSummary").hide();
+            $("#overallSummary").hide();
+
+            event.preventDefault();
+            console.log("Button clicked!");
+            let $start = $("#startButton");
+            console.log($start);
+
+            if ($start.text() === "Start Timer") {
+                Start();
+                attemptNumber++; // add up attempt number
+            } else {
+               Stop();
+
+                //user attempts
+                AttemptSummary();
+                OverallSummary();
+
+                updateChart(attempts.map(attempt => `Attempt ${attempt.attemptNumber}`), attempts.map(attempt => attempt.duration));  // Update chart data
+
+                Background(); //background colors
+                $start.text("Start Timer");
+            }
+        });
+
+
+
+        $("#attempt").on("click", function (event) {
+            $("#attemptSummary").show();
+            $("#overallSummary").hide();
+
+        });
+
+        $("#summary").on("click", function (event) {
+            $("#overallSummary").show();
+            $("#attemptSummary").hide();
+            OverallSummary();
+        });
+
+        $("#clear").on("click", function (event) {
+            clearResults();
+        });
+
+
+        function Start() {
+            let $start = $("#startButton");
+            console.log($start);
+            startTime = Date.now();
+            $start.text("Stop Timer");
+            realTime = setInterval(updateTimer, 100); // Update timer every 100 milliseconds
+        }
+
+
+        function Stop() {
+            console.log("Stop Timer");
+            clearInterval(realTime); // Stop updating timer
+            endTime = Date.now();
+            elapsedTime = (endTime - startTime) / 1000; // Calculate elapsed time in seconds
+            console.log("Elapsed Time: " + elapsedTime.toFixed(2) + " seconds");
+        }
+
+        function Background() {
+            if (elapsedTime === targetTime) {
+                $("body").css("background-color", "green");
+                alert("Perfect! You got exactly 3 seconds:)");
+            } else if (Math.abs(elapsedTime - targetTime) <= 0.2) {
+                $("body").css("background-color", "blue");
+                alert("Good Try! You were so close, You got it next time :)");
+            } else if (Math.abs(elapsedTime - targetTime) <= 0.5) {
+                $("body").css("background-color", "yellow");
+                alert("Almost! You were close, You got it next time :)");
+            } else {
+                $("body").css("background-color", "red");
+                alert("Well..let's keep trying :/");
+            }
+        }
+        function updateTimer() {
+            let currentTime = Date.now();
+            elapsedTime = (endTime - startTime) / 1000; //in seconds
+            let liveTime = (currentTime - startTime) / 1000;
+            console.log("Elapsed Time: " + elapsedTime.toFixed(2) + " seconds");
+            console.log("Live Time: " + liveTime.toFixed(2) + " seconds");
+        }
+
+        function AttemptSummary() {
+            let duration = elapsedTime;
+            attempts.push({ attemptNumber, startTime, endTime, duration }); // updates every time user does new attempt and adds it to array
+            console.log("Updated attempts array:", attempts);
+
+            let attemptSummaryElement = document.getElementById('attemptSummary');
+            attemptSummaryElement.innerHTML = ''; // Clear previous content
+            attempts.forEach((attempt, index) => {
+                attemptSummaryElement.innerHTML += `Attempt ${index + 1}: Start Time - ${attempt.startTime}, Stop Time - ${attempt.endTime}, Duration - ${attempt.duration} seconds <br>`;
+            });  // Update  for   summary
+
+            attempts.forEach((attempt, index) => {
+                console.log(`Attempt ${index + 1}: Start Time - ${attempt.startTime}, Stop Time - ${attempt.endTime}, Duration - ${attempt.duration} seconds`);
+            });  //  summary of each attempt
+        }
+
+        function OverallSummary() {
+            let totalAttempts = attempts.length;
+            let durations = attempts.map(attempt => attempt.duration); //creates new array with all the user info
+            let minSummary = Math.min(...durations);
+            let maxSummary = Math.max(...durations);
+            let avgSummary = durations.reduce((sum, duration) => sum + duration, 0) / totalAttempts;
+
+            console.log(`Total Attempts: ${totalAttempts}`);
+            console.log(`Min Attempt: ${minSummary} seconds`);
+            console.log(`Max Attempt: ${maxSummary} seconds`);
+            console.log(`Average for All Attempts: ${avgSummary} seconds`);
+
+            document.getElementById('overallSummary').textContent = `Overall Summary: Total Attempts - ${totalAttempts}, Min Attempt - ${minSummary} seconds, Max Attempt - ${maxSummary} seconds, Avg for All Attempts - ${avgSummary} seconds`;
+
+
+        }
+
+        function clearResults() {
+            let clearSum = document.getElementById("clears");
+            clearSum.innerHTML = '';
+            attempts = [];
+            attemptNumber = 0;
+            let attemptSummaryElement = document.getElementById("attemptSummary");
+            attemptSummaryElement.innerHTML = '';
+
+            console.log("Empty Array Elements: " + attempts);
+            console.log("Empty Array Length: " + attempts.length);
+            alert("Clearing results");
+
+            threeSecond.data.labels = []; // for graph
+            threeSecond.data.datasets[0].data = [];
+            threeSecond.update();
+        }
+
+        let myChart = document.getElementById('myChart').getContext('2d');
+
+        const data = {
+            labels: [],
+            datasets: [{
+                label: 'Attempt Duration (seconds)',
+                data: [],
+                backgroundColor: 'rgb(248,77,208)', // Bar color
+                borderColor: 'rgb(253,252,252)', // Border color
+                borderWidth: 1
+            }]
+        };
+
+        const options = {
+            scales: {
+                yAxes: [{
+                    ticks: {
+                        beginAtZero: true
+                    }
+                }]
+            }
+        };
+
+        let threeSecond = new Chart(myChart, {
+            type: 'bar',
+            data: data,
+            options: options
+        });
+
+        // update chart data
+        function updateChart(labels, durations) {
+            threeSecond.data.labels = labels; // Update labels
+            threeSecond.data.datasets[0].data = durations; // Update data
+            threeSecond.update(); // Update the chart
+        }
+
+    });
+</script>
+</body>
+</html>
