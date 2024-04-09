@@ -14,14 +14,16 @@
     </style>
 </head>
 <body>
+<br>
 <div class="container" style="text-align: center;">
     <div class="container" style="text-align: center;">
         <h1 style="display: inline-flex; align-items: center;">3 Seconds Stop</h1>
         <i class="fa-solid fa-stopwatch" style="font-size: 40px;"></i>
     </div>
 
+    <br><br>
     <div style="text-align: center;">
-        <button type="button" class="btn btn-light btn-lg" id="startButton">Start Timer</button>
+        <button type="button" class="btn btn-light btn-lg" id="startButton" style="font-size: 23px; padding: 30px 60px; font-weight: bold;">Start Timer</button>
     </div>
     <br><br>
 
@@ -39,10 +41,52 @@
     <div id="avgSummary"></div>
     <div id="clears"></div>
 
+<br><br><br>
+    <table class="table table-striped table-bordered " id="attemptTable">
+        <thead>
+        <tr>
+            <th scope="col">Start Time</th>
+            <th scope="col">Stop Time</th>
+            <th scope="col">Duration</th>
+        </tr>
+        </thead>
+        <tbody id="attemptBody">
+        <tr>
+            <th scope="row"></th>
+            <td></td>
+            <td></td>
+            <td></td>
+        </tr>
+
+        </tbody>
+    </table>
+
+    <table class="table table-bordered" id="summaryTable">
+        <thead>
+        <tr>
+            <th scope="col">Total Attempts</th>
+            <th scope="col">Min Attempt</th>
+            <th scope="col">Max Attempt</th>
+            <th scope="col">Average for Attempts</th>
+        </tr>
+        </thead>
+        <tbody id="summaryBody">
+        <tr>
+            <th scope="row"></th>
+            <td></td>
+            <td></td>
+            <td></td>
+            <td></td>
+        </tr>
+
+        </tbody>
+    </table>
+
     <br><br>
     <div class="container" style="display: flex; justify-content: center;">
         <canvas id="myChart" style="width:100%;max-width:700px;"></canvas>
     </div>
+
 </div>
 </body>
 
@@ -60,9 +104,14 @@
         let attempts = [];
         let attemptNumber = 0;
 
+        $('#myChart').hide();
+        $('#attemptTable').hide();
+        $('#summaryTable').hide();
+
         $("#startButton").on("click", function (event) {
             $("#attemptSummary").hide();
             $("#overallSummary").hide();
+
 
             event.preventDefault();
             console.log("Button clicked!");
@@ -83,20 +132,26 @@
 
                 Background(); //background colors
                 $start.text("Start Timer");
+
             }
         });
-
-
 
         $("#attempt").on("click", function (event) {
             $("#attemptSummary").show();
             $("#overallSummary").hide();
+            $('#summaryTable').hide();
+            $('#myChart').show();
+            $('#attemptTable').show();
+
 
         });
 
         $("#summary").on("click", function (event) {
             $("#overallSummary").show();
+            $('#summaryTable').show();
             $("#attemptSummary").hide();
+            $('#myChart').hide();
+            $('#attemptTable').hide();
             OverallSummary();
         });
 
@@ -116,7 +171,7 @@
 
         function Stop() {
             console.log("Stop Timer");
-            clearInterval(realTime); // Stop updating timer
+            clearInterval(realTime);// Stop updating timer
             endTime = Date.now();
             elapsedTime = (endTime - startTime) / 1000; // Calculate elapsed time in seconds
             console.log("Elapsed Time: " + elapsedTime.toFixed(2) + " seconds");
@@ -147,18 +202,26 @@
 
         function AttemptSummary() {
             let duration = elapsedTime;
-            attempts.push({ attemptNumber, startTime, endTime, duration }); // updates every time user does new attempt and adds it to array
+            let Milli = endTime - startTime; //got the time in milliseconds
+            let startSeconds = (Milli / 1000).toFixed(2); //displays start time for pressing the start button
+            let endSeconds = ((Milli + endTime - startTime) / 1000).toFixed(2); // and the end time
+
+            attempts.push({ attemptNumber, startSeconds, endSeconds, duration });// updates every time user does new attempt and adds it to array
             console.log("Updated attempts array:", attempts);
 
-            let attemptSummaryElement = document.getElementById('attemptSummary');
-            attemptSummaryElement.innerHTML = ''; // Clear previous content
-            attempts.forEach((attempt, index) => {
-                attemptSummaryElement.innerHTML += `Attempt ${index + 1}: Start Time - ${attempt.startTime}, Stop Time - ${attempt.endTime}, Duration - ${attempt.duration} seconds <br>`;
-            });  // Update  for   summary
+            let attemptBody = document.getElementById('attemptBody');
+            attemptBody.innerHTML = '';
 
             attempts.forEach((attempt, index) => {
-                console.log(`Attempt ${index + 1}: Start Time - ${attempt.startTime}, Stop Time - ${attempt.endTime}, Duration - ${attempt.duration} seconds`);
-            });  //  summary of each attempt
+                let row = attemptBody.insertRow();
+                let cell1 = row.insertCell(0);
+                let cell2 = row.insertCell(1);
+                let cell3 = row.insertCell(2);
+
+                cell1.textContent = `${attempt.startSeconds} seconds`;
+                cell2.textContent = `${attempt.endSeconds} seconds`;
+                cell3.textContent = `${attempt.duration} seconds`;
+            });
         }
 
         function OverallSummary() {
@@ -168,14 +231,24 @@
             let maxSummary = Math.max(...durations);
             let avgSummary = durations.reduce((sum, duration) => sum + duration, 0) / totalAttempts;
 
+            let attemptSummary = document.getElementById('summaryBody');
+            attemptSummary.innerHTML = '';
+
+            let row = attemptSummary.insertRow();
+            let cell1 = row.insertCell(0);
+            let cell2 = row.insertCell(1);
+            let cell3 = row.insertCell(2);
+            let cell4 = row.insertCell(3);
+
+            cell1.textContent = totalAttempts;
+            cell2.textContent = `${minSummary} seconds`;
+            cell3.textContent = `${maxSummary} seconds`;
+            cell4.textContent = `${avgSummary.toFixed(2)} seconds`;
+
             console.log(`Total Attempts: ${totalAttempts}`);
             console.log(`Min Attempt: ${minSummary} seconds`);
             console.log(`Max Attempt: ${maxSummary} seconds`);
             console.log(`Average for All Attempts: ${avgSummary} seconds`);
-
-            document.getElementById('overallSummary').textContent = `Overall Summary: Total Attempts - ${totalAttempts}, Min Attempt - ${minSummary} seconds, Max Attempt - ${maxSummary} seconds, Avg for All Attempts - ${avgSummary} seconds`;
-
-
         }
 
         function clearResults() {
@@ -183,16 +256,21 @@
             clearSum.innerHTML = '';
             attempts = [];
             attemptNumber = 0;
-            let attemptSummaryElement = document.getElementById("attemptSummary");
-            attemptSummaryElement.innerHTML = '';
+
+            let attemptBody = document.getElementById('attemptBody');
+            attemptBody.innerHTML = '';
+
+            let summaryBody = document.getElementById('summaryBody');
+            summaryBody.innerHTML = '';
 
             console.log("Empty Array Elements: " + attempts);
             console.log("Empty Array Length: " + attempts.length);
             alert("Clearing results");
 
-            threeSecond.data.labels = []; // for graph
+            threeSecond.data.labels = [];
             threeSecond.data.datasets[0].data = [];
             threeSecond.update();
+
         }
 
         let myChart = document.getElementById('myChart').getContext('2d');
