@@ -1,2 +1,3 @@
+3-Second Game
 GitHub Pages: https://ivysfiles.github.io/3SecondGame/
 
